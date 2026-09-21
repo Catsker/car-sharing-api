@@ -1,8 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
 
 const carRoutes = require('./routes/carRoutes');
+const swaggerSpec = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,6 +12,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/car-sharin
 
 app.use(express.json());
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/cars', carRoutes);
 
 mongoose

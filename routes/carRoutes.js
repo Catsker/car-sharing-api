@@ -3,7 +3,36 @@ const Car = require('../models/Car');
 
 const router = express.Router();
 
-// GET /api/cars/in-use-low-fuel
+/**
+ * @swagger
+ * tags:
+ *   name: Cars
+ *   description: Car sharing fleet management
+ */
+
+/**
+ * @swagger
+ * /api/cars/in-use-low-fuel:
+ *   get:
+ *     summary: Get cars in use with low fuel level
+ *     description: Returns cars with status 'In use' and fuelLevel < 0.25
+ *     tags: [Cars]
+ *     responses:
+ *       200:
+ *         description: List of matching cars
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Car'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/in-use-low-fuel', async (req, res) => {
   try {
     const cars = await Car.find({ status: 'In use', fuelLevel: { $lt: 0.25 } });
@@ -13,7 +42,29 @@ router.get('/in-use-low-fuel', async (req, res) => {
   }
 });
 
-// GET /api/cars/reserved-unauthorized
+/**
+ * @swagger
+ * /api/cars/reserved-unauthorized:
+ *   get:
+ *     summary: Get reserved cars with unauthorized credit card
+ *     description: Returns cars with status 'Reserved' where currentRun.driver.creditCard.isAuthorized is false. Only VIN, location and driver firstName/lastName/licenseNumber are returned.
+ *     tags: [Cars]
+ *     responses:
+ *       200:
+ *         description: List of matching cars
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ReservedUnauthorizedCar'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/reserved-unauthorized', async (req, res) => {
   try {
     const cars = await Car.find({
@@ -37,7 +88,32 @@ router.get('/reserved-unauthorized', async (req, res) => {
   }
 });
 
-// POST /api/cars
+/**
+ * @swagger
+ * /api/cars:
+ *   post:
+ *     summary: Add a new car
+ *     tags: [Cars]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Car'
+ *     responses:
+ *       201:
+ *         description: Car created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Car'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/', async (req, res) => {
   try {
     const car = await Car.create(req.body);
@@ -47,7 +123,27 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/cars/service-update
+/**
+ * @swagger
+ * /api/cars/service-update:
+ *   put:
+ *     summary: Send old/high-mileage cars to service
+ *     description: Sets status to 'In Service' for cars produced before 2017-01-01 or with mileage > 100000
+ *     tags: [Cars]
+ *     responses:
+ *       200:
+ *         description: Update result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UpdateManyResult'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put('/service-update', async (req, res) => {
   try {
     const result = await Car.updateMany(
@@ -63,7 +159,27 @@ router.put('/service-update', async (req, res) => {
   }
 });
 
-// PUT /api/cars/relocate-popular
+/**
+ * @swagger
+ * /api/cars/relocate-popular:
+ *   put:
+ *     summary: Relocate popular cars to a fixed location
+ *     description: Updates location coordinates to [27.5442615, 53.8882836] for cars with bookingsHistory.length > 2 and status not 'In use' and not 'Reserved'
+ *     tags: [Cars]
+ *     responses:
+ *       200:
+ *         description: Update result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UpdateManyResult'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put('/relocate-popular', async (req, res) => {
   try {
     const result = await Car.updateMany(
@@ -85,7 +201,44 @@ router.put('/relocate-popular', async (req, res) => {
   }
 });
 
-// DELETE /api/cars/:vin
+/**
+ * @swagger
+ * /api/cars/{vin}:
+ *   delete:
+ *     summary: Delete a car by VIN
+ *     tags: [Cars]
+ *     parameters:
+ *       - in: path
+ *         name: vin
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: VIN of the car to delete
+ *     responses:
+ *       200:
+ *         description: Car deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 car:
+ *                   $ref: '#/components/schemas/Car'
+ *       404:
+ *         description: Car not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete('/:vin', async (req, res) => {
   try {
     const car = await Car.findOneAndDelete({ VIN: req.params.vin });
