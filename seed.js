@@ -118,6 +118,92 @@ const cars = [
   },
 ];
 
+// --- Random generation helpers for additional cars ---
+
+const BRANDS = {
+  BMW: ['320i', 'X1', 'X3', '520d'],
+  Audi: ['A3', 'A4', 'Q3', 'Q5'],
+  Mercedes: ['A-Class', 'C-Class', 'GLA', 'CLA'],
+  Kia: ['Rio', 'Ceed', 'Sportage', 'Sorento'],
+  Hyundai: ['Solaris', 'Elantra', 'Tucson', 'Creta'],
+  Toyota: ['Corolla', 'Camry', 'RAV4', 'Yaris'],
+  Volkswagen: ['Golf', 'Polo', 'Tiguan', 'Passat'],
+  Skoda: ['Octavia', 'Rapid', 'Kodiaq', 'Fabia'],
+};
+
+const STATUSES = ['Free', 'Reserved', 'In use', 'Unavailable', 'In Service'];
+const FIRST_NAMES = ['Alexey', 'Maria', 'Pavel', 'Ekaterina', 'Nikita', 'Yulia', 'Denis', 'Victoria', 'Igor', 'Elena'];
+const LAST_NAMES = ['Kozlov', 'Novikova', 'Sokolov', 'Fedorova', 'Morozov', 'Belova', 'Orlov', 'Zaitseva', 'Popov', 'Vasilieva'];
+
+const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randomFloat = (min, max, decimals = 2) => Number((Math.random() * (max - min) + min).toFixed(decimals));
+const randomItem = (arr) => arr[randomInt(0, arr.length - 1)];
+const randomDate = (start, end) => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+
+const randomVIN = () =>
+  `VIN${Array.from({ length: 14 }, () => randomInt(0, 9)).join('')}`;
+
+const randomCoordinates = () => [
+  randomFloat(27.4, 27.7, 4),
+  randomFloat(53.8, 54.0, 4),
+];
+
+const randomDriver = () => {
+  const firstName = randomItem(FIRST_NAMES);
+  const lastName = randomItem(LAST_NAMES);
+  return makeDriver(`LIC-${randomInt(3000, 9999)}`, firstName, lastName, Math.random() > 0.3);
+};
+
+const randomBookingHistoryItem = () => {
+  const startMileage = randomInt(1000, 150000);
+  const startFuelLevel = randomFloat(0.3, 1);
+  return {
+    startDate: randomDate(new Date('2026-01-01'), new Date('2026-09-01')),
+    driver: randomDriver(),
+    startFuelLevel,
+    startMileage,
+    finishFuelLevel: randomFloat(0.05, startFuelLevel),
+    finishMileage: startMileage + randomInt(50, 500),
+  };
+};
+
+const generateRandomCar = (index) => {
+  const brand = randomItem(Object.keys(BRANDS));
+  const model = randomItem(BRANDS[brand]);
+  const status = randomItem(STATUSES);
+  const mileage = randomInt(1000, 180000);
+  const fuelLevel = randomFloat(0.02, 1);
+  const bookingsHistory = Array.from({ length: randomInt(0, 4) }, randomBookingHistoryItem);
+  const hasCurrentRun = status === 'In use' || status === 'Reserved' || Math.random() > 0.7;
+
+  return {
+    VIN: randomVIN(),
+    registrationNumber: `AB${randomInt(1000, 9999)}BB`,
+    productionInfo: {
+      brand,
+      model,
+      date: randomDate(new Date('2012-01-01'), new Date('2025-12-31')),
+    },
+    status,
+    fuelLevel,
+    mileage,
+    currentRun: hasCurrentRun
+      ? {
+          startDate: randomDate(new Date('2026-08-01'), new Date('2026-09-21')),
+          driver: randomDriver(),
+          startFuelLevel: randomFloat(0.3, 1),
+          startMileage: mileage,
+        }
+      : null,
+    location: { type: 'Point', coordinates: randomCoordinates() },
+    bookingsHistory,
+  };
+};
+
+const additionalCars = Array.from({ length: 25 }, (_, i) => generateRandomCar(i + 6));
+
+const allCars = [...cars, ...additionalCars];
+
 async function seed() {
   try {
     await mongoose.connect(MONGO_URI);
@@ -126,8 +212,8 @@ async function seed() {
     await Car.deleteMany({});
     console.log('Cleared cars collection');
 
-    await Car.insertMany(cars);
-    console.log(`Inserted ${cars.length} cars`);
+    await Car.insertMany(allCars);
+    console.log(`Inserted ${allCars.length} cars`);
   } catch (err) {
     console.error('Seeding failed:', err);
     process.exitCode = 1;

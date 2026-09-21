@@ -12,6 +12,38 @@ const router = express.Router();
 
 /**
  * @swagger
+ * /api/cars:
+ *   get:
+ *     summary: Get all cars
+ *     description: Returns the full list of cars in the fleet
+ *     tags: [Cars]
+ *     responses:
+ *       200:
+ *         description: List of all cars
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Car'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/', async (req, res) => {
+  try {
+    const cars = await Car.find();
+    res.json(cars);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/cars/in-use-low-fuel:
  *   get:
  *     summary: Get cars in use with low fuel level
@@ -196,6 +228,53 @@ router.put('/relocate-popular', async (req, res) => {
     );
 
     res.json({ matched: result.matchedCount, modified: result.modifiedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/cars/{vin}:
+ *   get:
+ *     summary: Get a car by VIN
+ *     tags: [Cars]
+ *     parameters:
+ *       - in: path
+ *         name: vin
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: VIN of the car to retrieve
+ *     responses:
+ *       200:
+ *         description: Car found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Car'
+ *       404:
+ *         description: Car not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/:vin', async (req, res) => {
+  try {
+    const car = await Car.findOne({ VIN: req.params.vin });
+
+    if (!car) {
+      return res.status(404).json({ error: 'Car not found' });
+    }
+
+    res.json(car);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
