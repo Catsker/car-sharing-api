@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 const Car = require('./models/Car');
 
-const MONGO_URI = 'mongodb://localhost:27017/car-sharing';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/car-sharing';
 
 const makeDriver = (licenseNumber, firstName, lastName, isAuthorized) => ({
   licenseNumber,
