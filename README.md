@@ -36,4 +36,4 @@ There you can explore all endpoints and test them directly from the browser.
 
 ## Note on Data
 
-On startup, the `app` container automatically clears the database and seeds it with test vehicles using the [`seed.js`](seed.js) script. No manual data setup is required — after `docker-compose up --build`, the data is ready to use.
+On startup, the `app` container automatically clears the database and seeds it with test vehicles using the [`src/seed.js`](src/seed.js) script. No manual data setup is required — after `docker-compose up --build`, the data is ready to use.
